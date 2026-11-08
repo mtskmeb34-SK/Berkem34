@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LingoCall AI</title>
+<style>
+  :root { --bg:#eef0f6; --ink:#16182b; --muted:#6b7090; --card:#fff; --accent:#ff5a5f; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#d9dce8; font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); }
+  #phone { position:relative; max-width:430px; height:100vh; margin:0 auto; background:var(--bg); overflow:hidden; }
+  #app { height:100%; overflow-y:auto; }
+  .hidden { display:none !important; }
+  button { font:inherit; border:0; cursor:pointer; color:inherit; }
+
+  /* Ana ekran */
+  .home { padding:18px 16px 40px; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .brand { font-size:22px; font-weight:800; }
+  .icon-btn { width:40px; height:40px; border-radius:50%; background:#fff; box-shadow:0 1px 4px #0001; font-size:18px; }
+  .chars { display:flex; gap:16px; overflow-x:auto; padding:4px 2px 12px; }
+  .chars .c { text-align:center; font-size:13px; font-weight:600; min-width:56px; background:none; }
+  .blob { position:relative; width:52px; height:48px; border-radius:42% 42% 38% 38%; margin:0 auto 4px; }
+  .blob i { position:absolute; top:14px; width:14px; height:14px; border-radius:50%; background:#fff; }
+  .blob i::after { content:""; position:absolute; left:4px; top:4px; width:7px; height:7px; border-radius:50%; background:#1a1a2e; }
+  .blob i:nth-child(1){ left:9px } .blob i:nth-child(2){ right:9px }
+  .blob b { position:absolute; left:50%; bottom:9px; width:14px; height:5px; border-radius:0 0 10px 10px; background:#0004; transform:translateX(-50%); }
+  .cat { border-radius:24px; padding:16px 14px 14px; margin:14px 0; color:#fff; }
+  .cat h3 { margin:0 0 10px 4px; font-size:17px; }
+  .chips { display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; }
+  .chip { flex:0 0 auto; background:#fff; color:var(--ink); border-radius:16px; padding:12px 14px; font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px; box-shadow:0 2px 6px #0002; }
+  .cat.Travel{background:linear-gradient(135deg,#3b82f6,#2563eb)} .cat.School{background:linear-gradient(135deg,#fb923c,#f59e0b)}
+  .cat.Fun{background:linear-gradient(135deg,#10b981,#059669)} .cat.Career{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .tile { background:#fff; border-radius:20px; padding:14px; text-align:left; display:flex; gap:10px; align-items:center; box-shadow:0 1px 4px #0001; }
+  .tile .e { font-size:22px; background:#f1f2f8; border-radius:12px; padding:8px; }
+  .tile b { display:block; } .tile small { color:var(--muted); font-size:11px; }
+  .talk { width:100%; margin:12px 0; background:linear-gradient(135deg,#ff6b6b,#ff5a5f); color:#fff; border-radius:22px; padding:16px; display:flex; align-items:center; gap:12px; text-align:left; }
+  .talk .e { background:#ffffff40; border-radius:14px; padding:10px; font-size:22px; }
+  .talk b { display:block; font-size:16px; } .talk small { opacity:.9; }
+
+  /* Alt sayfa */
+  #sheet-bg { position:absolute; inset:0; background:#0007; z-index:20; }
+  #sheet { position:absolute; left:0; right:0; bottom:0; max-height:85%; overflow-y:auto; background:var(--bg); border-radius:26px 26px 0 0; padding:18px 16px 28px; z-index:21; }
+  #sheet h2 { margin:0 0 4px; font-size:20px; }
+  #sheet .sub { color:var(--muted); font-size:13px; margin-bottom:12px; }
+  .row { width:100%; background:#fff; border-radius:16px; padding:14px; margin-bottom:10px; text-align:left; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px #0001; }
+  .row.sel { background:#e3e8ff; outline:2px solid #a5b4fc; }
+  .row .t { flex:1; } .row .t b { display:block; } .row .t small { color:var(--muted); font-size:12px; }
+  .row .t .tag { color:#3b82f6; font-weight:700; font-size:13px; }
+  .search { width:100%; padding:12px 14px; border-radius:14px; border:1px solid #d6d9e8; font:inherit; margin-bottom:12px; background:#fff; }
+  .done { float:right; color:#4f46e5; font-weight:700; background:none; }
+  .input { width:100%; padding:14px; border-radius:14px; border:1px solid #d6d9e8; font:inherit; background:#fff; }
+  .primary { width:100%; margin-top:12px; padding:14px; border-radius:16px; background:#4f46e5; color:#fff; font-weight:700; }
+  .word { background:#fff; border-radius:14px; padding:12px 14px; margin-bottom:8px; }
+  .word b { font-size:16px; } .word span { color:var(--muted); display:block; font-size:13px; margin-top:2px; }
+
+  /* Sohbet */
+  .chat { height:100%; display:flex; flex-direction:column; color:#fff; }
+  .chat-top { display:flex; justify-content:space-between; align-items:center; padding:14px 14px 0; }
+  .chat-top .icon-btn { background:#0003; color:#fff; box-shadow:none; }
+  .chat-top .ttl { font-weight:700; text-align:center; font-size:14px; }
+  .stage { flex:0 0 auto; padding:10px 0 14px; text-align:center; transition:all .25s; }
+  .stage .blob { width:130px; height:118px; }
+  .stage .blob i { top:36px; width:34px; height:34px; } .stage .blob i::after { left:10px; top:10px; width:16px; height:16px; }
+  .stage .blob i:nth-child(1){ left:22px } .stage .blob i:nth-child(2){ right:22px }
+  .stage .blob b { bottom:22px; width:36px; height:12px; }
+  .chat.expanded .stage .blob { width:200px; height:182px; }
+  .chat.expanded .stage .blob i { top:56px; width:52px; height:52px; } .chat.expanded .stage .blob i::after { left:15px; top:15px; width:24px; height:24px; }
+  .chat.expanded .stage .blob i:nth-child(1){ left:34px } .chat.expanded .stage .blob i:nth-child(2){ right:34px }
+  .chat.expanded .stage .blob b { bottom:34px; width:54px; height:18px; }
+  .chat.expanded .msgs { display:none; }
+  .speaking .blob b { animation:talk .35s infinite alternate; }
+  @keyframes talk { from{height:5px} to{height:16px} }
+  .msgs { flex:1; background:var(--bg); color:var(--ink); border-radius:26px 26px 0 0; padding:14px 14px 90px; overflow-y:auto; }
+  .bub { max-width:85%; padding:12px 14px; border-radius:18px; margin:6px 0; line-height:1.4; font-size:15px; box-shadow:0 1px 3px #0001; }
+  .bub.ai { background:#fff; border-bottom-left-radius:6px; }
+  .bub.user { margin-left:auto; color:#fff; border-bottom-right-radius:6px; }
+  .bub .w { cursor:pointer; border-bottom:1px dotted #9aa; }
+  .tr { font-size:13px; color:var(--muted); margin-top:6px; padding-top:6px; border-top:1px dashed #d6d9e8; }
+  .act { display:inline-block; font-size:12px; font-weight:700; padding:5px 10px; border-radius:12px; background:#fff; margin:2px 0 4px; }
+  .act.r { margin-left:auto; display:block; width:max-content; }
+  .hint { display:block; margin:6px 0 0 auto; width:max-content; background:#fff1f1; color:var(--accent); border:1px solid #ffc9cb; border-radius:16px; padding:8px 14px; font-weight:700; font-size:13px; }
+  .pre { white-space:pre-wrap; }
+  .typing { color:var(--muted); font-size:13px; padding:6px 4px; }
+  .dock { position:absolute; left:0; right:0; bottom:0; padding:10px 18px 18px; display:flex; align-items:center; gap:12px; border-radius:26px 26px 0 0; background:#0003; }
+  .dock .mic { width:68px; height:68px; border-radius:50%; background:#fff; font-size:26px; flex:0 0 auto; touch-action:none; user-select:none; }
+  .dock .mic.rec { transform:scale(1.12); box-shadow:0 0 0 10px #ffffff40; }
+  .dock .mid { flex:1; text-align:center; font-size:14px; font-weight:600; opacity:.9; }
+  .dock .kb { width:44px; height:44px; border-radius:14px; background:#ffffff30; color:#fff; font-size:18px; }
+  .dock input { flex:1; padding:14px; border-radius:16px; border:0; font:inherit; }
+
+  /* Karşılama */
+  .onb { padding:40px 22px; min-height:100%; display:flex; flex-direction:column; background:linear-gradient(160deg,#4f46e5,#8b5cf6); color:#fff; }
+  .onb h1 { margin:0 0 4px; font-size:30px; } .onb .lead { opacity:.9; margin-bottom:26px; }
+  .step { background:#ffffff22; border-radius:20px; padding:16px; margin-bottom:14px; display:flex; gap:14px; }
+  .step .n { width:34px; height:34px; border-radius:50%; background:#fff; color:#4f46e5; font-weight:800; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .step b { display:block; font-size:16px; margin-bottom:3px; } .step span { font-size:14px; opacity:.92; }
+  .onb .go { margin-top:auto; padding:16px; border-radius:18px; background:#fff; color:#4f46e5; font-weight:800; font-size:16px; }
+
+  #toast { position:absolute; left:16px; right:16px; bottom:110px; background:#16182b; color:#fff; padding:12px 14px; border-radius:14px; z-index:40; font-size:14px; }
+  #toast button { background:#4f46e5; color:#fff; border-radius:10px; padding:6px 10px; margin-left:8px; font-weight:700; }
+</style>
+
+</head>
+<body>
+  <div id="phone">
+    <div id="app"></div>
+    <div id="sheet-bg" class="hidden"></div>
+    <div id="sheet" class="hidden"></div>
+    <div id="toast" class="hidden"></div>
+  </div>
+<script>
+/* ---------------- Durum ---------------- */
+var S = { uid: null, lang: 'English', chars: [], scen: {}, langs: [], conv: null, char: null, muted: false, expanded: false, kb: false, busy: false };
+var $ = function (id) { return document.getElementById(id); };
+
+function load(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+var API_URL = '';  // Bağımsız sayfada Apps Script web uygulaması adresi (…/exec); boşsa ilk açılışta sorulur
+function inAppsScript() { return typeof google !== 'undefined' && google.script && google.script.run; }
+function ensureApiUrl() {
+  if (!API_URL) API_URL = load('lc_api', '');
+  if (!API_URL) {
+    API_URL = (prompt('Apps Script web uygulaması adresini yapıştır (…/exec ile biten):') || '').trim();
+    if (API_URL) save('lc_api', API_URL);
+  }
+  return API_URL;
+}
+function api(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  if (inAppsScript()) {
+    return new Promise(function (ok, fail) {
+      google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) { fail(new Error(e && e.message ? e.message : String(e))); })[fn].apply(google.script.run, args);
+    });
+  }
+  var url = ensureApiUrl();
+  if (!url) return Promise.reject(new Error('Apps Script adresi girilmedi. Sayfayı yenileyip adresi yapıştır.'));
+  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.error); return j.data; });
+}
+
+function toast(msg, action, ms) {
+  var t = $('toast');
+  t.innerHTML = esc(msg) + (action ? '<button id="toast-act">' + esc(action.label) + '</button>' : '');
+  t.classList.remove('hidden');
+  if (action) $('toast-act').onclick = function () { action.fn(); t.classList.add('hidden'); };
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function () { t.classList.add('hidden'); }, ms || (action ? 6000 : 3000));
+}
+
+function blob(color, small) {
+  return '<div class="blob" style="background:' + esc(color) + '"><i></i><i></i><b></b></div>';
+}
+function langObj() { return S.langs.filter(function (l) { return l.name === S.lang; })[0] || { speech: 'en-GB', flag: '', native: S.lang }; }
+function charById(id) { return S.chars.filter(function (c) { return c.id === id; })[0]; }
+
+/* ---------------- Açılış ---------------- */
+(function init() {
+  S.uid = load('lc_uid', null);
+  if (!S.uid) { S.uid = 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); save('lc_uid', S.uid); }
+  S.lang = load('lc_lang', 'English');
+  $('app').innerHTML = '<div class="home"><div class="typing">Yükleniyor…</div></div>';
+  api('getBootstrap').then(function (d) {
+    S.chars = d.characters; S.scen = d.scenarios; S.langs = d.languages;
+    if (load('lc_onb', '0') !== '1') renderOnboarding(); else renderHome();
+  }).catch(function (e) {
+    $('app').innerHTML = '<div class="home"><h3>Kurulum eksik</h3><p>' + esc(e.message) + '</p><p>Tabloda Menü › LingoCall AI › <b>Kurulumu çalıştır</b> adımını uygula.</p></div>';
+  });
+})();
+
+/* ---------------- Karşılama ---------------- */
+function renderOnboarding() {
+  $('app').innerHTML =
+    '<div class="onb"><h1>LingoCall AI</h1><div class="lead">Yapay zeka ile konuşarak dil pratiği yap.</div>' +
+    step(1, 'Bir konu seç, bir karakter belirle', "'Havalimanında' ya da 'Arkadaş edinmek' gibi hazır bir senaryoyla başla ya da kendin yaz. Sonra kiminle konuşacağını seç.") +
+    step(2, 'Sadece konuş — basılı tut ve konuş', 'Mikrofona basılı tutup konuş, bırak ve gönder. Yapay zeka partnerin saniyeler içinde sesli yanıt verir ve her sohbet tekrar dönmek için kaydedilir.') +
+    step(3, 'Çevir, açıkla ve ipucu al', 'Herhangi bir satıra dokunup çevir, bir düzeltmenin nedenini sor ya da sırada ne diyeceğini bilemediğinde bir öneri al.') +
+    '<button class="go" id="onb-go">Başla</button></div>';
+  $('onb-go').onclick = function () { save('lc_onb', '1'); openLanguages(true); };
+}
+function step(n, t, d) { return '<div class="step"><div class="n">' + n + '</div><div><b>' + esc(t) + '</b><span>' + esc(d) + '</span></div></div>'; }
+
+/* ---------------- Ana ekran ---------------- */
+function renderHome() {
+  var h = '<div class="home"><div class="topbar"><div class="brand">LingoCall AI</div><button class="icon-btn" id="b-set">⚙️</button></div>';
+  h += '<div class="chars">' + S.chars.map(function (c) { return '<button class="c" data-c="' + c.id + '">' + blob(c.color) + esc(c.name.split(' ')[0] === 'Professor' ? 'Prof.' : c.name.split(' ')[0]) + '</button>'; }).join('') + '</div>';
+  Object.keys(S.scen).forEach(function (cat) {
+    h += '<div class="cat ' + esc(cat) + '"><h3>' + esc(catName(cat)) + '</h3><div class="chips">' +
+      S.scen[cat].map(function (s) { return '<button class="chip" data-s="' + s.id + '"><span>' + s.emoji + '</span>' + esc(s.tr) + '</button>'; }).join('') + '</div></div>';
+  });
+  h += '<div class="tiles"><button class="tile" id="b-words"><span class="e">📖</span><div><b>Kelimelerim</b><small>Kaydedilen kelimeler</small></div></button>' +
+       '<button class="tile" id="b-hist"><span class="e">🕘</span><div><b>Geçmiş</b><small>Önceki sohbetler</small></div></button></div>';
+  h += '<button class="talk" id="b-any"><span class="e">💬</span><div><b>Her şeyi konuş</b><small>Kendi konunu yaz ✨</small></div></button>';
+  h += '</div>';
+  $('app').innerHTML = h;
+  $('b-set').onclick = function () { openLanguages(false); };
+  $('b-words').onclick = openWords;
+  $('b-hist').onclick = openHistory;
+  $('b-any').onclick = openCustomTopic;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-s]'), function (b) { b.onclick = function () { pickCharacter({ scenarioId: b.dataset.s, title: b.textContent.trim() }); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-c]'), function (b) { b.onclick = function () { openCustomTopic(b.dataset.c); }; });
+}
+function catName(c) { return { Travel: 'Seyahat', School: 'Okul', Fun: 'Eğlence', Career: 'Kariyer' }[c] || c; }
+
+/* ---------------- Alt sayfalar ---------------- */
+function openSheet(html) {
+  $('sheet').innerHTML = html; $('sheet').classList.remove('hidden'); $('sheet-bg').classList.remove('hidden');
+  $('sheet-bg').onclick = closeSheet;
+}
+function closeSheet() { $('sheet').classList.add('hidden'); $('sheet-bg').classList.add('hidden'); }
+
+function openLanguages(first) {
+  var render = function (q) {
+    q = (q || '').toLowerCase();
+    var list = S.langs.filter(function (l) { return !q || (l.name + ' ' + l.native).toLowerCase().indexOf(q) > -1; });
+    $('lang-list').innerHTML = list.map(function (l) {
+      return '<button class="row ' + (l.name === S.lang ? 'sel' : '') + '" data-l="' + esc(l.name) + '"><span style="font-size:24px">' + l.flag + '</span><div class="t"><b>' + esc(l.name) + '</b><small>' + esc(l.native) + '</small></div>' + (l.name === S.lang ? '✔️' : '') + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-l]'), function (b) { b.onclick = function () { S.lang = b.dataset.l; save('lc_lang', S.lang); render($('lang-q').value); }; });
+  };
+  openSheet('<button class="done" id="lang-done">Bitti</button><h2>Öğrendiğin dil</h2><div class="sub">Konuşma pratiği bu dilde yapılır.</div>' +
+    '<input class="search" id="lang-q" placeholder="🔍 Dil ara..."><div id="lang-list"></div>');
+  render('');
+  $('lang-q').oninput = function () { render(this.value); };
+  $('lang-done').onclick = function () { closeSheet(); renderHome(); };
+}
+
+function openCustomTopic(charId) {
+  openSheet('<h2>Her şeyi konuş</h2><div class="sub">Konuşmak istediğin konuyu yaz.</div>' +
+    '<input class="input" id="topic" placeholder="Örn. Futbol, tatil planı, filmler…"><button class="primary" id="topic-go">Devam</button>');
+  $('topic-go').onclick = function () {
+    var t = $('topic').value.trim(); if (!t) return;
+    pickCharacter({ custom: t, title: t, charId: typeof charId === 'string' ? charId : null });
+  };
+}
+
+function pickCharacter(opt) {
+  if (opt.charId) return startChat(opt, opt.charId);
+  openSheet('<div class="sub" style="margin:0">KONUŞULACAK KONU</div><h2>' + esc(opt.title) + '</h2><div class="sub">Kiminle konuşacağını seç</div>' +
+    S.chars.map(function (c) {
+      return '<button class="row" data-pc="' + c.id + '">' + blob(c.color) + '<div class="t"><b>' + esc(c.name) + '</b><span class="tag">' + esc(c.tagline) + '</span><small>' + esc(c.desc) + '</small></div>›</button>';
+    }).join(''));
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pc]'), function (b) { b.onclick = function () { startChat(opt, b.dataset.pc); }; });
+}
+
+function openWords() {
+  openSheet('<h2>Kelimelerim</h2><div class="sub">Sohbetteki bir kelimeye dokunup kaydedebilirsin.</div><div id="wl" class="typing">Yükleniyor…</div>');
+  api('getWords', S.uid).then(function (w) {
+    $('wl').className = '';
+    $('wl').innerHTML = w.length ? w.map(function (x) { return '<div class="word"><b>' + esc(x.word) + '</b> <small>(' + esc(x.lang) + ')</small><span>' + esc(x.meaning) + '</span>' + (x.example ? '<span><i>' + esc(x.example) + '</i></span>' : '') + '</div>'; }).join('') : '<div class="typing">Henüz kayıtlı kelime yok.</div>';
+  }).catch(function (e) { $('wl').textContent = e.message; });
+}
+
+function openHistory() {
+  openSheet('<h2>Geçmiş</h2><div class="sub">Devam etmek için bir sohbete dokun.</div><div id="hl" class="typing">Yükleniyor…</div>');
+  api('getHistory', S.uid).then(function (h) {
+    $('hl').className = '';
+    $('hl').innerHTML = h.length ? h.map(function (x) {
+      return '<button class="row" data-h="' + x.convId + '">' + blob(x.color) + '<div class="t"><b>' + esc(x.title) + '</b><small>' + esc(x.charName) + ' · ' + esc(x.lang) + ' · ' + esc(x.date) + '</small></div>›</button>';
+    }).join('') : '<div class="typing">Henüz sohbet yok.</div>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-h]'), function (b) { b.onclick = function () { resume(b.dataset.h); }; });
+  }).catch(function (e) { $('hl').textContent = e.message; });
+}
+
+/* ---------------- Sohbet ---------------- */
+function startChat(opt, charId) {
+  closeSheet();
+  S.char = charById(charId); S.msgs = []; S.expanded = false; S.kb = false;
+  S.conv = null; S.starting = true; S.lastOpt = opt; S.lastCharId = charId;
+  renderChat(opt.title);
+  setTyping(true);
+  api('startConversation', S.uid, opt.scenarioId || '', opt.custom || '', charId, S.lang).then(function (r) {
+    S.conv = r.convId; S.starting = false; setTyping(false); addMsg('ai', r.reply, true);
+  }).catch(function (e) { S.starting = false; setTyping(false); showError(e.message, true); });
+}
+
+function resume(convId) {
+  closeSheet();
+  api('resumeConversation', convId).then(function (r) {
+    S.conv = convId; S.char = charById(r.charId); S.lang = r.lang; S.msgs = []; S.expanded = false; S.kb = false;
+    renderChat(r.title);
+    r.messages.forEach(function (m) { addMsg(m.role, m.text, false); });
+  }).catch(function (e) { toast(e.message); });
+}
+
+function renderChat(title) {
+  var c = S.char.color;
+  $('app').innerHTML =
+    '<div class="chat" id="chat" style="background:' + esc(c) + '">' +
+    '<div class="chat-top"><button class="icon-btn" id="c-back">‹</button><div class="ttl">' + esc(title) + '</div>' +
+    '<div><button class="icon-btn" id="c-snd">' + (S.muted ? '🔇' : '🔊') + '</button> <button class="icon-btn" id="c-exp">⤢</button></div></div>' +
+    '<div class="stage" id="stage">' + blob(c) + '</div>' +
+    '<div class="msgs" id="msgs"></div>' +
+    '<div class="dock" id="dock"></div></div>';
+  $('c-back').onclick = function () { stopSpeak(); renderHome(); };
+  $('c-snd').onclick = function () { S.muted = !S.muted; if (S.muted) stopSpeak(); this.textContent = S.muted ? '🔇' : '🔊'; };
+  $('c-exp').onclick = function () { S.expanded = !S.expanded; $('chat').classList.toggle('expanded', S.expanded); };
+  renderDock();
+}
+
+function renderDock() {
+  var d = $('dock');
+  if (S.kb) {
+    d.innerHTML = '<button class="kb" id="d-kb">🎤</button><input id="d-in" placeholder="Bir şey yaz…"><button class="kb" id="d-send">➤</button>';
+    $('d-kb').onclick = function () { S.kb = false; renderDock(); };
+    $('d-send').onclick = sendTyped;
+    $('d-in').onkeydown = function (e) { if (e.key === 'Enter') sendTyped(); };
+  } else {
+    d.innerHTML = '<button class="kb" id="d-kb">⌨️</button><div class="mid">Basılı tut ve konuş</div><button class="mic" id="d-mic">🎙️</button>';
+    $('d-kb').onclick = function () { S.kb = true; renderDock(); };
+    var m = $('d-mic');
+    m.onpointerdown = function (e) { e.preventDefault(); startRec(m); };
+    m.onpointerup = m.onpointerleave = m.onpointercancel = function () { stopRec(m); };
+  }
+}
+function sendTyped() { var i = $('d-in'); var t = i.value.trim(); if (t) { i.value = ''; send(t); } }
+
+function addMsg(role, text, speak) {
+  var i = S.msgs.length; S.msgs.push({ role: role, text: text });
+  var box = $('msgs');
+  var wrap = document.createElement('div');
+  wrap.dataset.i = i;
+  if (role === 'ai') {
+    wrap.innerHTML = '<div class="bub ai">' + wordify(text) + '<div class="tr hidden" id="tr' + i + '"></div></div><button class="act" style="color:#3b82f6">🌐 Çevir</button>';
+    wrap.querySelector('.act').onclick = function () { doTranslate(i); };
+    wrap.querySelectorAll('.w').forEach(function (w) { w.onclick = function () { wordTap(w.textContent, text); }; });
+  } else {
+    wrap.innerHTML = '<div class="bub user" style="background:' + esc(S.char.color) + '">' + esc(text) + '</div><button class="act r" style="color:' + esc(S.char.color) + '">✦ Açıkla</button><div class="bub ai pre hidden" id="ex' + i + '"></div>';
+    wrap.querySelector('.act').onclick = function () { doExplain(i); };
+  }
+  box.appendChild(wrap);
+  if (role === 'ai') { removeHint(); var h = document.createElement('button'); h.className = 'hint'; h.id = 'hint'; h.textContent = '💡 Ne diyeyim?'; h.onclick = doHint; box.appendChild(h); }
+  box.scrollTop = box.scrollHeight;
+  if (role === 'ai' && speak) speakText(text);
+}
+function showError(msg, retry) {
+  var box = $('msgs'); if (!box) { toast(msg, null, 8000); return; }
+  var d = document.createElement('div');
+  d.className = 'bub ai pre'; d.style.cssText = 'background:#fff1f1;color:#b42318;border:1px solid #ffc9cb;max-width:100%';
+  d.textContent = '⚠️ ' + msg;
+  if (retry && S.lastOpt) {
+    var b = document.createElement('button'); b.className = 'act'; b.style.cssText = 'display:block;margin-top:8px;color:#4f46e5'; b.textContent = '↻ Tekrar dene';
+    b.onclick = function () { startChat(S.lastOpt, S.lastCharId); };
+    d.appendChild(b);
+  }
+  box.appendChild(d); box.scrollTop = box.scrollHeight;
+}
+function removeHint() { var h = $('hint'); if (h) h.remove(); }
+function wordify(t) { return esc(t).replace(/([A-Za-zÀ-ÿĀ-žА-Яа-я']{3,})/g, '<span class="w">$1</span>'); }
+function setTyping(on) {
+  var old = $('typing'); if (old) old.remove();
+  if (on) { var t = document.createElement('div'); t.className = 'typing'; t.id = 'typing'; t.textContent = S.char.name + ' yazıyor…'; $('msgs').appendChild(t); $('msgs').scrollTop = $('msgs').scrollHeight; }
+}
+
+function send(text) {
+  if (!S.conv) { if (S.starting) toast('Sohbet başlıyor, birkaç saniye bekle…'); else showError('Sohbet başlatılamadı. Önce aşağıdaki hatayı çöz, sonra tekrar dene.', true); return; }
+  if (S.busy) return;
+  S.busy = true; stopSpeak(); removeHint();
+  addMsg('user', text, false); setTyping(true);
+  api('sendMessage', S.conv, text).then(function (r) { setTyping(false); addMsg('ai', r, true); })
+    .catch(function (e) { setTyping(false); showError(e.message, false); })
+    .then(function () { S.busy = false; });
+}
+
+function doTranslate(i) {
+  var el = $('tr' + i);
+  if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+  if (el.textContent) { el.classList.remove('hidden'); return; }
+  el.textContent = '…'; el.classList.remove('hidden');
+  api('translateText', S.msgs[i].text, '').then(function (t) { el.textContent = t; }).catch(function (e) { el.textContent = e.message; });
+}
+function doExplain(i) {
+  var el = $('ex' + i);
+  if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+  if (el.textContent) { el.classList.remove('hidden'); return; }
+  el.textContent = '…'; el.classList.remove('hidden');
+  api('explainText', S.conv, S.msgs[i].text).then(function (t) { el.textContent = t; }).catch(function (e) { el.textContent = e.message; });
+}
+function doHint() {
+  var h = $('hint'); h.textContent = '…';
+  api('suggestReply', S.conv).then(function (t) {
+    var lines = t.split('\n').map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 3);
+    h.remove();
+    var box = document.createElement('div'); box.id = 'hint';
+    box.innerHTML = lines.map(function (l, k) {
+      var p = l.split('|'); return '<button class="chip" style="margin:4px 0;width:100%" data-k="' + k + '"><div style="text-align:left"><div>' + esc((p[0] || '').trim()) + '</div><small style="color:#6b7090;font-weight:500">' + esc((p[1] || '').trim()) + '</small></div></button>';
+    }).join('');
+    $('msgs').appendChild(box); $('msgs').scrollTop = $('msgs').scrollHeight;
+    box.querySelectorAll('[data-k]').forEach(function (b) { b.onclick = function () { send((lines[b.dataset.k].split('|')[0] || '').trim()); }; });
+  }).catch(function (e) { h.textContent = '💡 Ne diyeyim?'; toast(e.message); });
+}
+function wordTap(word, sentence) {
+  api('translateText', word, '').then(function (m) {
+    toast(word + ' = ' + m, { label: 'Kaydet', fn: function () { api('saveWord', S.uid, word, m, S.lang, sentence).then(function () { toast('Kelime kaydedildi ✔️'); }); } });
+  }).catch(function (e) { toast(e.message); });
+}
+
+/* ---------------- Ses ---------------- */
+var rec = null, recText = '';
+function startRec(btn) {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('Bu tarayıcı ses tanımayı desteklemiyor. Klavye düğmesini kullan.'); return; }
+  if (S.busy) return;
+  stopSpeak(); recText = '';
+  rec = new SR(); rec.lang = langObj().speech; rec.interimResults = false; rec.maxAlternatives = 1;
+  rec.onresult = function (e) { recText = e.results[0][0].transcript; };
+  rec.onerror = function (e) { toast(e.error === 'not-allowed' ? (inAppsScript() ? 'Apps Script içinde mikrofon çalışmaz. Bağımsız sayfa sürümünü kullan ya da klavye düğmesine bas.' : 'Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin ver.') : 'Ses hatası: ' + e.error, null, 6000); };
+  rec.onend = function () { btn.classList.remove('rec'); if (recText) send(recText); rec = null; };
+  btn.classList.add('rec');
+  try { rec.start(); } catch (e) {}
+}
+function stopRec(btn) { btn.classList.remove('rec'); if (rec) { try { rec.stop(); } catch (e) {} } }
+
+var VOICES = [];
+function loadVoices() { VOICES = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+if (window.speechSynthesis) { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
+var MALE_RE = /\b(male|man|guy|david|mark|ryan|george|james|daniel|thomas|richard|alex|fred|paul|stefan|jorge|pablo|diego|hans|claus|jean|henri|luca|cosimo|tolga|ahmet|conrad|killian|florian|jan|maarten|dmitry|pavel|adriano|antonio|enrique|guillermo|takumi|keita|liam|connor|brian|eric|roger|steffan|christopher|andrew|davis|jason|tony|oliver|noah|ravi|hemant|naayf|hamed)\b/i;
+var VOICE_DEFAULTS = {
+  mia: { g: 'k', p: 1.05, r: 1.0 }, cornelius: { g: 'e', p: 0.85, r: 1.05 }, rex: { g: 'e', p: 0.7, r: 1.1 },
+  hayes: { g: 'e', p: 0.45, r: 0.95 }, pip: { g: 'k', p: 1.8, r: 1.1 }, lola: { g: 'k', p: 1.25, r: 0.9 }
+};
+function voiceCfg(ch) {
+  var d = VOICE_DEFAULTS[ch.id] || { g: 'k', p: 1, r: 1 };
+  var v = ch.voice || {};
+  var g = String(v.g || d.g).toLowerCase().charAt(0);
+  return { g: (g === 'e' || g === 'm') ? 'e' : 'k', p: v.p > 0 ? v.p : d.p, r: v.r > 0 ? v.r : d.r };
+}
+function hashStr(t) { var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; }
+function pickVoice(ch, lang) {
+  if (!VOICES.length) loadVoices();
+  var pre = lang.split('-')[0].toLowerCase();
+  var list = VOICES.filter(function (v) { return v.lang && v.lang.toLowerCase().replace('_', '-').indexOf(pre) === 0; });
+  if (!list.length) return null;
+  var cfg = voiceCfg(ch);
+  var male = list.filter(function (v) { return MALE_RE.test(v.name); });
+  var fem = list.filter(function (v) { return !MALE_RE.test(v.name); });
+  var pool = cfg.g === 'e' ? male : fem;
+  if (!pool.length) pool = list;
+  return pool[hashStr(ch.id) % pool.length];
+}
+function speakText(text) {
+  if (S.muted || !window.speechSynthesis) return;
+  stopSpeak();
+  var cfg = voiceCfg(S.char), lg = langObj();
+  var u = new SpeechSynthesisUtterance(text);
+  var v = pickVoice(S.char, lg.speech);
+  if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = lg.speech; }
+  u.pitch = Math.min(2, Math.max(0.1, cfg.p));
+  u.rate = Math.min(2, Math.max(0.5, cfg.r * 0.95));
+  var st = $('stage');
+  u.onstart = function () { if (st) st.classList.add('speaking'); };
+  u.onend = u.onerror = function () { if (st) st.classList.remove('speaking'); };
+  window.speechSynthesis.speak(u);
+}
+function stopSpeak() { if (window.speechSynthesis) window.speechSynthesis.cancel(); var st = $('stage'); if (st) st.classList.remove('speaking'); }
+</script>
+
+</body>
+</html>
